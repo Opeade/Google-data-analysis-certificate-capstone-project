@@ -1,0 +1,261 @@
+---
+title: "Google Data Analyst Certificate Capstone Project"
+author: "Opeyemi Adesany"
+date: "`r Sys.Date()`"
+output: html_document
+---
+##loading the packages that will be needed for the project
+Loading the dataset required for analysis
+
+```{r setup, include=FALSE}
+#installing library
+library(tidyverse)
+library(lubridate)
+library(readr)
+library(ggplot2)
+library(readr)
+library(hms)
+library(geosphere) #geosphere package to compute the distance between two coordinates
+
+```
+
+## Importing the data set into R
+After loading the packages that will be needed for the analysis, the next thing is to import the data set
+
+```{r cars}
+#importing the data set  
+jul_2021 <-read_csv("~/bike_share/202107-divvy-tripdata.csv")
+
+aug_2021 <- read_csv("~/bike_share/202108-divvy-tripdata.csv")
+
+sep_2021 <- read_csv("~/bike_share/202109-divvy-tripdata.csv")
+
+oct_2021 <- read_csv("~/bike_share/202110-divvy-tripdata.csv")
+
+nov_2021 <-read_csv("~/bike_share/202111-divvy-tripdata.csv")
+
+dec_2021 <-read_csv("~/bike_share/202112-divvy-tripdata.csv")
+
+jan_2022 <- read_csv("~/bike_share/202201-divvy-tripdata.csv")
+
+feb_2022 <-read_csv("~/bike_share/202202-divvy-tripdata.csv")
+
+mar_2022 <-read_csv("~/bike_share/202203-divvy-tripdata.csv")
+
+apr_2022 <- read_csv("~/bike_share/202204-divvy-tripdata.csv")
+
+may_2022 <- read_csv("~/bike_share/202205-divvy-tripdata.csv")
+
+jun_2022 <- read_csv("~/bike_share/202206-divvy-tripdata.csv")
+
+
+```
+
+## Merginging the data sets into single data frame
+merging the 12 months of data set into single data frame
+
+```{r}
+#merging the last 12 months dataset
+merged_12_months_data <- rbind(jul_2021,
+                                 aug_2021,
+                                 sep_2021,
+                                 oct_2021,
+                                 nov_2021,
+                                 dec_2021,
+                                 jan_2022,
+                                 feb_2022,
+                                 mar_2022,
+                                 apr_2022,
+                                 may_2022,
+                                 jun_2022)
+
+```
+inspecting the data frame of the merged data
+
+```{r}
+#Inspecting the combined data frame
+colnames(merged_12_months_data) #column names in the data frame
+nrow(merged_12_months_data) #number of rows in the data frame
+dim(merged_12_months_data) #retrieve the dimension of the data frame
+head(merged_12_months_data) #
+str(merged_12_months_data) #see list of columns and data type
+summary(merged_12_months_data) #statistical summary of the data
+```
+Creating additional column for further analysis
+
+```{r pressure, echo=FALSE}
+#creating new column which are ride_duration, ride_distance, week_day_name and month_name to better understand customer usage of the service
+merged_12_months_data <- merged_12_months_data %>%
+  mutate(ride_duration = as.numeric(difftime(ended_at, started_at,units = "mins")),
+         ride_distance = distHaversine(cbind(start_lng, start_lat), cbind(end_lng, end_lat)),
+         day_of_week = weekdays(started_at),
+         ride_month = months(started_at),
+         ride_year = year(started_at))
+```
+
+Inspecting the additional column added to the data frame
+```{r}
+#Inspecting the data frame after addition of column
+colnames(merged_12_months_data) #column names in the data frame
+nrow(merged_12_months_data) #number of rows in the data frame
+dim(merged_12_months_data) #retrieve the dimension of the data frame
+head(merged_12_months_data)
+str(merged_12_months_data) #see list of columns and data type
+summary(merged_12_months_data) #statistical summary of the data
+```
+
+Arranging the week day ride and month ride accordily
+```{r}
+#Arrange the day of the week and month accordingly
+#order for day of the week
+merged_12_months_data$day_of_week <- ordered(merged_12_months_data$day_of_week,
+                                               levels = c("Sunday", 
+                                                          "Monday", 
+                                                          "Tuesday",
+                                                          "Wednesday", 
+                                                          "Thursday",
+                                                          "Friday",
+                                                          "Saturday"))
+
+#order for month
+merged_12_months_data$ride_month <- ordered(merged_12_months_data$ride_month, 
+                                            level = c("July",
+                                                      "August",
+                                                      "September",
+                                                      "October",
+                                                      "November",
+                                                      "December",
+                                                      "January",
+                                                      "February",
+                                                      "March", 
+                                                      "April",
+                                                      "May",
+                                                      "June"))
+```
+
+Inspecting the arranged day and month of ride accordily
+```{r}
+#inspecting the data frame
+str(merged_12_months_data)
+colnames(merged_12_months_data)
+head(merged_12_months_data)
+```
+Removing unwanted column from the data frame
+
+```{r}
+#removing unwanted column from the data set
+merged_12_months_data <- merged_12_months_data %>%
+  select(-c(start_lat:end_lng))
+```
+
+Inspecting the new data frame after removal of unwanted column
+
+```{r}
+str(merged_12_months_data)
+colnames(merged_12_months_data)
+head(merged_12_months_data)
+```
+Further cleaning of the data set to remove trips not start at a station and not ending at a station and also ride duration less than 5 mins
+
+```{r}
+#further cleaning of the data set to remove trips not start at a station and not ending at a station and also ride duration less than 5 mins
+cleaned_12_months_data <- merged_12_months_data %>%
+  filter(!is.na(start_station_name)) %>%
+  filter(!is.na(end_station_name)) %>%
+  filter(ride_duration >= 5) %>%
+  filter(ride_distance > 0)
+
+```
+
+Inspect the data frame after removing some variables
+
+```{r}
+#Inspecting the data frame after further cleaning
+colnames(merged_12_months_data) #column names in the data frame
+nrow(merged_12_months_data) #number of rows in the data frame
+dim(merged_12_months_data) #retrieve the dimension of the data frame
+head(merged_12_months_data)
+str(merged_12_months_data) #see list of columns and data type
+summary(merged_12_months_data) #statistical summary of the data
+
+```
+
+Running preliminary statistics to know the nature of the data frame
+
+```{r}
+#Doing preliminary statistic analysis to check for data distribution
+count_station <- cleaned_12_months_data %>%
+count(start_station_name) %>%
+rename(count_station = n) %>%
+arrange(desc(count_station))
+head(count_station)
+tibble(count_station)
+```
+
+```{r}
+#summary of ride by each casual and member
+member_category_summary <- cleaned_12_months_data %>%
+  group_by(member_casual) %>%
+  summarise(total_ride = n(),
+            average_ride = as.numeric(mean(ride_duration)),
+            maximum_ride= as.numeric(max(ride_duration)),
+            minimum_ride = as.numeric(min(ride_duration)),
+            average_distance = as.numeric(mean(ride_distance)),
+            maximum_distance = as.numeric(max(ride_distance)),
+            minimum_distance = as.numeric(min(ride_distance))
+  ) %>%
+  ungroup()
+tibble(member_category_summary)
+```
+
+```{r}
+#summary of ride by member and casual on weekdays
+summary_ride_member_casual <- cleaned_12_months_data %>%
+  group_by(member_casual, day_of_week, ride_month,ride_year) %>%
+  summarise(total_ride = n(),average_ride = as.numeric(mean(ride_duration))
+  )%>%
+  ungroup()
+
+head(summary_ride_member_casual)
+```
+
+```{r}
+#we want to count number of ride for each month
+summary_ride_by_month <- cleaned_12_months_data %>%
+  count(ride_month)
+  
+head(summary_ride_by_month)
+
+```
+
+Analysing the data to get some insight from the data using group_by() and summarise() to aggregate valuse from column of interest.
+I extracted membership type, rideable type, ride year, ride month, day of week. 
+```{r}
+result_12_months_data <- cleaned_12_months_data %>%
+  group_by(member_casual, rideable_type, ride_year, ride_month, day_of_week) %>%
+  summarise(number_of_rides = n(), avg_ride_duration = mean(ride_duration), avg_ride_distance = mean(ride_distance))
+
+tibble(result_12_months_data)
+dim(result_12_months_data)
+tibble(result_12_months_data)
+```
+
+Exporting the insight made from the analysis
+```{r}
+#exporting my code into csv file
+result_file_result_12_months_data <- paste(getwd(),"/result_12_months_data.csv", sep = "")
+write_csv(result_12_months_data, result_file_result_12_months_data)
+
+result_file_summary_ride_by_month <- paste(getwd(),"/summary_ride_by_month.csv", sep = "")
+write_csv(summary_ride_by_month, result_file_summary_ride_by_month)
+
+
+result_file_summary_ride_member_casual <- paste(getwd(),"/summary_ride_member_casual.csv", sep = "")
+write_csv(summary_ride_member_casual, result_file_summary_ride_member_casual)
+
+result_file_member_category_summary  <- paste(getwd(),"/member_category_summary .csv", sep = "")
+write_csv(member_category_summary , result_file_member_category_summary )
+
+```
+
+Thank you.
