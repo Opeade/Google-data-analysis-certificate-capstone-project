@@ -26,6 +26,8 @@ Analyse Cyclistic historical bike trip data to identify trends, and use insights
 
 ## **RECOMMEDATION**
 
+
+
 Riders with Annual Subscriptions cover fewer kilometer and spend less time on the trip than Casual riders. This shows that Casual riders are quickly given access to the bikes. Annual members often travel the same number of kilometers every day of the week. As a result, there aren't as few motorcycles available on the weekends as there are during the workweek.
 
 Based on these findings, I think it will be financially advantageous to convert Casual riders into Annual members. Even while weekend riding is the norm for Casual riders, there are ways to encourage them to become Annual members by offering them incentives that would increase their savings. Incentives can be designed so that because they frequently take lengthy rides and are members, they will save more money than when they are just Casual members.
